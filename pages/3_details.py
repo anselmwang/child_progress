@@ -1,7 +1,7 @@
 import streamlit as st
-from datetime import datetime
 import sys
 import os
+import pandas as pd
 
 # Add parent directory to path to import utils
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,10 +15,12 @@ st.set_page_config(
     layout="wide"
 )
 
+
 # Initialize data handler
 @st.cache_resource
 def get_data_handler():
     return DataHandler()
+
 
 data_handler = get_data_handler()
 
@@ -36,31 +38,30 @@ else:
     # Sort by date (newest first)
     all_data_sorted = sorted(all_data, key=lambda x: x['date'], reverse=True)
     
-    # Display records
+    # Prepare data for table
+    table_data = []
     for record in all_data_sorted:
-        date_obj = datetime.strptime(record['date'], '%Y-%m-%d')
-        date_display = date_obj.strftime('%Y年%m月%d日 (%A)')
+        problems = record.get('problems', [])
+        exercises = record.get('exercises', [])
+        notes = record.get('notes', '').strip()
         
-        with st.expander(f"📅 {date_display}", expanded=False):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.write("**📚 AOPS 题目：**")
-                problems = record.get('problems', [])
-                exercises = record.get('exercises', [])
-                
-                if problems:
-                    st.write(f"Problems: {', '.join(problems)}")
-                if exercises:
-                    st.write(f"Exercises: {', '.join(exercises)}")
-                
-                if not problems and not exercises:
-                    st.write("当天没有完成AOPS题目")
-            
-            with col2:
-                st.write("**📝 学习笔记：**")
-                notes = record.get('notes', '').strip()
-                if notes:
-                    st.write(notes)
-                else:
-                    st.write("无笔记")
+        # Build details string
+        details_parts = []
+        if problems:
+            details_parts.append(f"Problems: {', '.join(problems)}")
+        if exercises:
+            details_parts.append(f"Exercises: {', '.join(exercises)}")
+        
+        details = " ".join(details_parts) if details_parts else ""
+        
+        table_data.append({
+            '日期': record['date'],
+            'Problem数量': len(problems),
+            'Exercise数量': len(exercises),
+            'Note': notes if notes else "",
+            'Details': details
+        })
+    
+    # Create and display DataFrame
+    df = pd.DataFrame(table_data)
+    st.dataframe(df, use_container_width=True, hide_index=True)

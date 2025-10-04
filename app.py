@@ -8,4 +8,4 @@ st.set_page_config(
 )
 
 # Automatic redirect to input_progress page
-st.switch_page("pages/1_home.py")
+st.switch_page("pages/1_input_progress.py")
