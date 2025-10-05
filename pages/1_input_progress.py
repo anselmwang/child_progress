@@ -7,7 +7,9 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.data_handler import DataHandler
-from utils.validation import validate_problem_format, validate_continuity
+from utils.validation import (
+    validate_problem_format, validate_continuity, extract_alcumus_timestamps
+)
 
 # Page configuration
 st.set_page_config(
@@ -67,6 +69,30 @@ problems_input = st.text_input(
     help="Problem格式：X.Y（如15.1）；Exercise格式：X.Y.Z（如15.1.1）"
 )
 
+st.subheader("Alcumus 题目")
+existing_alcumus = existing_data.get('alcumus', [])
+existing_alcumus_str = "\n".join(existing_alcumus) if existing_alcumus else ""
+alcumus_input = st.text_area(
+    "粘贴 Alcumus 题目历史",
+    value=existing_alcumus_str,
+    placeholder="从 AOPS 网站复制粘贴 Alcumus 题目历史（包含时间戳）",
+    help="粘贴包含时间戳的文本，系统会自动提取时间戳",
+    height=150
+)
+
+# Show extracted timestamps preview
+if alcumus_input.strip():
+    preview_timestamps = extract_alcumus_timestamps(alcumus_input)
+    if preview_timestamps:
+        st.info(f"📋 检测到 {len(preview_timestamps)} 个时间戳：")
+        # Display timestamps in a compact format
+        timestamp_display = ", ".join(preview_timestamps[:10])
+        if len(preview_timestamps) > 10:
+            timestamp_display += f" ... (还有 {len(preview_timestamps) - 10} 个)"
+        st.caption(timestamp_display)
+    else:
+        st.warning("⚠️ 未检测到有效的时间戳格式 (YYYY-MM-DD HH:MM:SS)")
+
 st.subheader("学习笔记")
 notes_input = st.text_area(
     "记录今天的其他学习活动",
@@ -96,17 +122,27 @@ if st.button("更新进度", type="primary"):
         if not continuity_valid:
             st.error(f"❌ {continuity_error}")
         else:
+            # Extract Alcumus timestamps
+            alcumus_timestamps = extract_alcumus_timestamps(alcumus_input)
+            
             # Save data
             try:
                 data_handler.update_date_record(
-                    date_str, problems_list, exercises_list, notes_input
+                    date_str, problems_list, exercises_list, notes_input,
+                    alcumus=alcumus_timestamps
                 )
                 st.success("✅ 进度已成功更新！")
                 
                 # Show what was saved
+                saved_info = []
                 if problems_list or exercises_list:
                     saved_items = problems_list + exercises_list
-                    st.info(f"📝 已保存：{', '.join(saved_items)}")
+                    saved_info.append(f"AOPS: {', '.join(saved_items)}")
+                if alcumus_timestamps:
+                    saved_info.append(f"Alcumus: {len(alcumus_timestamps)}道题")
+                
+                if saved_info:
+                    st.info(f"📝 已保存：{' | '.join(saved_info)}")
                 
             except Exception as e:
                 st.error(f"❌ 保存失败：{str(e)}")

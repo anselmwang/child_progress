@@ -43,6 +43,7 @@ else:
     for record in all_data_sorted:
         problems = record.get('problems', [])
         exercises = record.get('exercises', [])
+        alcumus = record.get('alcumus', [])
         notes = record.get('notes', '').strip()
         
         # Build details string
@@ -51,13 +52,16 @@ else:
             details_parts.append(f"Problems: {', '.join(problems)}")
         if exercises:
             details_parts.append(f"Exercises: {', '.join(exercises)}")
+        if alcumus:
+            details_parts.append(f"Alcumus: {', '.join(alcumus)}")
         
-        details = " ".join(details_parts) if details_parts else ""
+        details = " | ".join(details_parts) if details_parts else ""
         
         table_data.append({
             '日期': record['date'],
             'Problem数量': len(problems),
             'Exercise数量': len(exercises),
+            'Alcumus数量': len(alcumus),
             'Note': notes if notes else "",
             'Details': details
         })

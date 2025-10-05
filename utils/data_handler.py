@@ -99,8 +99,12 @@ class DataHandler:
             raise e
     
     def update_date_record(self, date_str: str, problems: List[str], 
-                          exercises: List[str], notes: str, book: str = "Introduction to Algebra"):
+                          exercises: List[str], notes: str, 
+                          alcumus: List[str] = None, 
+                          book: str = "Introduction to Algebra"):
         """Update or create a record for a specific date."""
+        if alcumus is None:
+            alcumus = []
         all_data = self.load_all_data()
         
         # Find existing record or create new one
@@ -111,6 +115,7 @@ class DataHandler:
                     'date': date_str,
                     'problems': problems,
                     'exercises': exercises,
+                    'alcumus': alcumus,
                     'notes': notes,
                     'book': book
                 }
@@ -122,6 +127,7 @@ class DataHandler:
                 'date': date_str,
                 'problems': problems,
                 'exercises': exercises,
+                'alcumus': alcumus,
                 'notes': notes,
                 'book': book
             })

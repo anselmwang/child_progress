@@ -12,12 +12,14 @@ def prepare_chart_data(all_data: List[Dict[str, Any]]) -> pd.DataFrame:
         date = record['date']
         problems_count = len(record.get('problems', []))
         exercises_count = len(record.get('exercises', []))
-        total_count = problems_count + exercises_count
+        alcumus_count = len(record.get('alcumus', []))
+        total_count = problems_count + exercises_count + alcumus_count
         
         chart_data.append({
             'date': datetime.strptime(date, '%Y-%m-%d'),
             'problems': problems_count,
             'exercises': exercises_count,
+            'alcumus': alcumus_count,
             'total': total_count
         })
     
@@ -61,6 +63,15 @@ def create_daily_chart(all_data: List[Dict[str, Any]]) -> go.Figure:
     
     fig.add_trace(go.Scatter(
         x=df['date'],
+        y=df['alcumus'],
+        mode='lines+markers',
+        name='Alcumus',
+        line=dict(color='#9467bd', width=2),
+        marker=dict(size=6)
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=df['date'],
         y=df['total'],
         mode='lines+markers',
         name='总计',
@@ -99,6 +110,7 @@ def create_weekly_chart(all_data: List[Dict[str, Any]]) -> go.Figure:
     weekly_df = df.groupby('week').agg({
         'problems': 'sum',
         'exercises': 'sum',
+        'alcumus': 'sum',
         'total': 'sum'
     }).reset_index()
     
@@ -119,6 +131,15 @@ def create_weekly_chart(all_data: List[Dict[str, Any]]) -> go.Figure:
         mode='lines+markers',
         name='Exercise',
         line=dict(color='#ff7f0e', width=2),
+        marker=dict(size=8)
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=weekly_df['week'],
+        y=weekly_df['alcumus'],
+        mode='lines+markers',
+        name='Alcumus',
+        line=dict(color='#9467bd', width=2),
         marker=dict(size=8)
     ))
     
@@ -162,6 +183,7 @@ def create_monthly_chart(all_data: List[Dict[str, Any]]) -> go.Figure:
     monthly_df = df.groupby('month').agg({
         'problems': 'sum',
         'exercises': 'sum',
+        'alcumus': 'sum',
         'total': 'sum'
     }).reset_index()
     
@@ -182,6 +204,15 @@ def create_monthly_chart(all_data: List[Dict[str, Any]]) -> go.Figure:
         mode='lines+markers',
         name='Exercise',
         line=dict(color='#ff7f0e', width=2),
+        marker=dict(size=10)
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=monthly_df['month'],
+        y=monthly_df['alcumus'],
+        mode='lines+markers',
+        name='Alcumus',
+        line=dict(color='#9467bd', width=2),
         marker=dict(size=10)
     ))
     
@@ -249,7 +280,9 @@ def get_achievements(all_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     
     for record in sorted_data:
         date = record['date']
-        all_items = record.get('problems', []) + record.get('exercises', [])
+        all_items = (record.get('problems', []) + 
+                     record.get('exercises', []) + 
+                     record.get('alcumus', []))
         
         # Update cumulative count
         cumulative_count += len(all_items)

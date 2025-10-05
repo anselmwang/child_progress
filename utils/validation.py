@@ -1,6 +1,21 @@
 import re
 from typing import List, Tuple, Optional
 
+def extract_alcumus_timestamps(text: str) -> List[str]:
+    """
+    Extract Alcumus problem timestamps from pasted text.
+    
+    Args:
+        text: Pasted text from AOPS Alcumus page
+    
+    Returns:
+        List of timestamps found (format: YYYY-MM-DD HH:MM:SS)
+    """
+    # Pattern to match timestamps like "2025-09-01 12:45:52"
+    timestamp_pattern = r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+    timestamps = re.findall(timestamp_pattern, text)
+    return timestamps
+
 
 def parse_problem_number(problem_str: str) -> Optional[Tuple[int, int, Optional[int]]]:
     """
