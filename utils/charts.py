@@ -73,7 +73,8 @@ def create_daily_chart(all_data: List[Dict[str, Any]]) -> go.Figure:
         xaxis_title="日期",
         yaxis_title="题目数量",
         hovermode='x unified',
-        showlegend=True
+        showlegend=True,
+        xaxis=dict(tickformat='%Y-%m-%d')
     )
     
     return fig
@@ -93,8 +94,8 @@ def create_weekly_chart(all_data: List[Dict[str, Any]]) -> go.Figure:
         fig.update_layout(title="每周学习进度")
         return fig
     
-    # Group by week
-    df['week'] = df['date'].dt.to_period('W').dt.start_time
+    # Group by week and use week-ending date (Sunday)
+    df['week'] = df['date'].dt.to_period('W').dt.end_time
     weekly_df = df.groupby('week').agg({
         'problems': 'sum',
         'exercises': 'sum',
@@ -135,7 +136,8 @@ def create_weekly_chart(all_data: List[Dict[str, Any]]) -> go.Figure:
         xaxis_title="周",
         yaxis_title="题目数量",
         hovermode='x unified',
-        showlegend=True
+        showlegend=True,
+        xaxis=dict(tickformat='%Y-%m-%d')
     )
     
     return fig
@@ -197,7 +199,8 @@ def create_monthly_chart(all_data: List[Dict[str, Any]]) -> go.Figure:
         xaxis_title="月份",
         yaxis_title="题目数量",
         hovermode='x unified',
-        showlegend=True
+        showlegend=True,
+        xaxis=dict(tickformat='%Y-%m')
     )
     
     return fig
@@ -214,9 +217,9 @@ def get_weekly_summary(all_data: List[Dict[str, Any]]) -> Dict[str, int]:
         if record_date >= week_start:
             this_week_data.append(record)
     
-    total_problems = sum(len(record.get('problems', [])) 
+    total_problems = sum(len(record.get('problems', []))
                         for record in this_week_data)
-    total_exercises = sum(len(record.get('exercises', [])) 
+    total_exercises = sum(len(record.get('exercises', []))
                          for record in this_week_data)
     
     return {
@@ -224,6 +227,79 @@ def get_weekly_summary(all_data: List[Dict[str, Any]]) -> Dict[str, int]:
         'exercises': total_exercises,
         'total': total_problems + total_exercises
     }
+
+
+def get_achievements(all_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Get all achievements (chapter completions and milestones) sorted by completion date (newest first)."""
+    if not all_data:
+        return []
+    
+    from utils.validation import parse_problem_number
+    
+    achievements = []
+    
+    # Prepare data sorted by date
+    sorted_data = sorted(all_data, key=lambda x: x['date'])
+    
+    # Track chapter completion
+    chapter_last_dates = {}  # chapter_num -> last_date_seen
+    total_problems_by_date = {}  # date -> cumulative_count
+    
+    cumulative_count = 0
+    
+    for record in sorted_data:
+        date = record['date']
+        all_items = record.get('problems', []) + record.get('exercises', [])
+        
+        # Update cumulative count
+        cumulative_count += len(all_items)
+        total_problems_by_date[date] = cumulative_count
+        
+        # Track chapters seen on this date
+        for item in all_items:
+            parsed = parse_problem_number(item)
+            if parsed:
+                chapter_num = parsed[0]
+                chapter_last_dates[chapter_num] = date
+    
+    # Detect chapter completions
+    # When we see a new chapter, the previous chapter is considered complete
+    sorted_chapters = sorted(chapter_last_dates.keys())
+    for i in range(len(sorted_chapters) - 1):
+        current_chapter = sorted_chapters[i]
+        next_chapter = sorted_chapters[i + 1]
+        
+        # If chapters are consecutive, mark current as completed
+        if next_chapter == current_chapter + 1:
+            completion_date = chapter_last_dates[current_chapter]
+            achievements.append({
+                'type': 'chapter_completion',
+                'description': f'📚 第{current_chapter}章完成！',
+                'date': completion_date,
+                'chapter': current_chapter
+            })
+    
+    # Detect milestone achievements (every 100 problems)
+    milestone_dates = {}  # milestone -> date_achieved
+    
+    for date, count in total_problems_by_date.items():
+        milestone = (count // 100) * 100
+        if milestone >= 100 and milestone not in milestone_dates:
+            milestone_dates[milestone] = date
+    
+    # Add milestone achievements
+    for milestone, date in milestone_dates.items():
+        achievements.append({
+            'type': 'milestone',
+            'description': f'🎯 完成{milestone}道题目！',
+            'date': date,
+            'milestone': milestone
+        })
+    
+    # Sort by date (newest first), then by type for same dates
+    achievements.sort(key=lambda x: (x['date'], x['type']), reverse=True)
+    
+    return achievements
 
 def detect_chapter_completion(all_data: List[Dict[str, Any]]) -> List[str]:
     """Detect completed chapters from the data."""

@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.data_handler import DataHandler
 from utils.charts import (
     create_daily_chart, create_weekly_chart, create_monthly_chart,
-    get_weekly_summary, detect_chapter_completion
+    get_achievements
 )
 
 # Page configuration
@@ -59,29 +59,21 @@ else:
     else:
         st.success("✅ 最近14天记录完整！")
     
-    # Weekly summary and motivation
-    st.subheader("🌟 本周成就")
-    weekly_stats = get_weekly_summary(all_data)
+    # Achievements list
+    st.subheader("🏆 成就列表")
+    achievements = get_achievements(all_data)
     
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Problem", weekly_stats['problems'])
-    with col2:
-        st.metric("Exercise", weekly_stats['exercises'])
-    with col3:
-        st.metric("总计", weekly_stats['total'])
-    
-    if weekly_stats['total'] > 0:
-        problem_count = weekly_stats['problems']
-        exercise_count = weekly_stats['exercises']
-        st.success(f"本周你完成了{problem_count}道问题和{exercise_count}道练习！🌟")
-    
-    # Chapter completion milestones
-    completed_chapters = detect_chapter_completion(all_data)
-    if completed_chapters:
-        st.subheader("🎉 里程碑成就")
-        for achievement in completed_chapters:
-            st.success(achievement)
+    if achievements:
+        for achievement in achievements:
+            # Format date for display
+            date_obj = datetime.strptime(achievement['date'], '%Y-%m-%d')
+            formatted_date = date_obj.strftime('%Y年%m月%d日')
+            
+            # Display achievement with date
+            achievement_text = f"{achievement['description']} - {formatted_date}"
+            st.success(achievement_text)
+    else:
+        st.info("还没有完成任何成就，继续学习获得你的第一个成就吧！")
     
     # Charts
     st.subheader("📈 学习趋势图表")
