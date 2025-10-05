@@ -23,7 +23,7 @@
 
 **Windows:**
 ```bash
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
 **macOS/Linux:**
@@ -44,6 +44,11 @@ cd child_progress
 uv sync
 ```
 
+## (optional) if you put the `child_progress\data` in other place for cloud sync
+```
+mklink /D "C:\GitRoot\child_progress\data" "C:\Cloud\OneDrive\share_by_all_machines\child_progress_data"
+```
+
 ## 运行应用
 
 使用 uv 运行 Streamlit 应用：
@@ -53,6 +58,7 @@ uv run streamlit run app.py
 ```
 
 应用将在浏览器中自动打开，默认地址为 `http://localhost:8501`
+
 
 ## 使用指南
 
