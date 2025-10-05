@@ -54,7 +54,7 @@ else:
         current_date += timedelta(days=1)
     
     if missing_dates:
-        missing_str = ", ".join([d.strftime('%m月%d日') for d in missing_dates])
+        missing_str = ", ".join([f"{d.month}月{d.day}日" for d in missing_dates])
         st.warning(f"⚠️ 缺失记录：{missing_str}")
     else:
         st.success("✅ 最近14天记录完整！")
@@ -67,7 +67,7 @@ else:
         for achievement in achievements:
             # Format date for display
             date_obj = datetime.strptime(achievement['date'], '%Y-%m-%d')
-            formatted_date = date_obj.strftime('%Y年%m月%d日')
+            formatted_date = f"{date_obj.year}年{date_obj.month}月{date_obj.day}日"
             
             # Display achievement with date
             achievement_text = f"{achievement['description']} - {formatted_date}"
